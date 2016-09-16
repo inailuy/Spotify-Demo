@@ -8,20 +8,27 @@
 
 import Foundation
 
-let baseURL = "https://api.spotify.com"
+let GET = "GET"
+let baseURL = "https://api.spotify.com/v1/"
+
 enum EndPoints: String {
-    case Artists = "/v1/artists"
-    case Albums = "/v1/albums"
-    case Tracks = "/v1/tracks"
-    case Search = "/v1/search"
+    case Artists = "artists"
+    case Albums = "albums"
+    case Tracks = "tracks"
+    case Search = "search"
 }
 
-class SpotifyAPI {
+enum NotificationKey:String {
+    case ArtistResultsKey = "artistResultsKey"
+    case AlbumResultsKey = "albumResultsKey"
+    case TrackResultsKey = "trackResultsKey"
+}
+
+class SpotifyAPI: NSObject {
     static let sharedInstance = SpotifyAPI()
-    weak var delegate:SpotifyAPIDelegate?
     
     //MARK: Basics
-    func createRequest(url: NSURL, method: String) -> NSMutableURLRequest {
+    private func createRequest(url: NSURL, method: String) -> NSMutableURLRequest {
         let request = NSMutableURLRequest(URL: url)
         request.HTTPMethod = method
         request.addValue("application/json", forHTTPHeaderField: "Accept")
@@ -30,99 +37,175 @@ class SpotifyAPI {
         return request
     }
     
-    func createTask(request: NSMutableURLRequest, completion: (json: NSDictionary) -> Void) {
+    private func createTask(request: NSMutableURLRequest, completion: (json: NSDictionary) -> Void) {
         let session = NSURLSession.sharedSession()
         let task = session.dataTaskWithRequest(request) { data, response, error in
             do {
-                let jsonDictionary = try NSJSONSerialization.JSONObjectWithData(data!, options:[]) as! NSDictionary
-                completion(json: jsonDictionary)
+                let json = try NSJSONSerialization.JSONObjectWithData(data!, options:[]) as! NSDictionary
+                if let error = json["error"] {
+                    print(error)
+                    return
+                }
+                completion(json: json)
             }
-            catch{}
+            catch{
+                print("create task error")
+                print(error)
+            }
         }
         task.resume()
+    }
+    
+    func postNotification(key: String, results:AnyObject) {
+        let nc = NSNotificationCenter.defaultCenter()
+        nc.postNotificationName(key, object: results)
     }
     
     //MARK: Get Artists
     func getArtists(query: String) {
         let url = SpotifyURL.searchArtist(query)
-        let request = createRequest(url, method:"GET")
+        let request = createRequest(url!, method:GET)
         createTask(request, completion:{ json in
-            let dic = json.valueForKey("artists") as! NSDictionary
-            let array = dic.valueForKey("items") as! [NSDictionary]
+            let dic = json.valueForKey(Key.Artist.rawValue) as! NSDictionary
+            let array = dic.valueForKey(Key.Items.rawValue) as! [NSDictionary]
             var artistArray = [Artist]()
             for obj in array {
                 let artist = Artist(json: obj)
                 artistArray.append(artist)
             }
-            self.delegate?.artistResults(artistArray)
+            self.postNotification(NotificationKey.ArtistResultsKey.rawValue, results: artistArray)
+        })
+    }
+    
+    func getArtists(query: String, withCompletion:(albumArray: [Artist]) -> Void) {
+        let url = SpotifyURL.searchArtist(query)
+        let request = createRequest(url!, method:GET)
+        createTask(request, completion:{ json in
+            let dic = json.valueForKey(Key.Artist.rawValue) as! NSDictionary
+            let array = dic.valueForKey(Key.Items.rawValue) as! [NSDictionary]
+            var artistArray = [Artist]()
+            for obj in array {
+                let artist = Artist(json: obj)
+                artistArray.append(artist)
+            }
+            withCompletion(albumArray: artistArray)
         })
     }
     
     func getSimilarArtist(id: String) {
         let url = SpotifyURL.getArtistRelatedArtist(id)
-        let request = createRequest(url, method: "GET")
+        let request = createRequest(url, method: GET)
         createTask(request, completion: { json in
-            let array = json.valueForKey("artists") as! [NSDictionary]
+            let array = json.valueForKey(Key.Artist.rawValue) as! [NSDictionary]
             var artistArray = [Artist]()
             for obj in array {
                 let artist = Artist(json: obj)
                 artistArray.append(artist)
             }
-            self.delegate?.artistResults(artistArray)
+            self.postNotification(NotificationKey.ArtistResultsKey.rawValue, results: artistArray)
+        })
+    }
+    
+    func getSimilarArtist(id: String, withCompletion:(albumArray: [Artist]) -> Void) {
+        let url = SpotifyURL.getArtistRelatedArtist(id)
+        let request = createRequest(url, method: GET)
+        createTask(request, completion: { json in
+            let array = json.valueForKey(Key.Artist.rawValue) as! [NSDictionary]
+            var artistArray = [Artist]()
+            for obj in array {
+                let artist = Artist(json: obj)
+                artistArray.append(artist)
+            }
+            withCompletion(albumArray: artistArray)
         })
     }
     
     //MARK: Get Albums
-    func getArtistAlbums(artist: String) {
-        let url = SpotifyURL.getArtistsAlbums(artist)
-        let request = createRequest(url, method: "GET")
+    func getArtistAlbums(id: String) {
+        let url = SpotifyURL.getArtistsAlbums(id)
+        let request = createRequest(url, method: GET)
         createTask(request, completion: { json in
-            let array = json.valueForKey("items") as! [NSDictionary]
+            let array = json.valueForKey(Key.Items.rawValue) as! [NSDictionary]
+            var albumArray = [Album]()
+            
+            for obj in array {
+                let album = Album(json: obj)
+                albumArray.append(album)
+            }
+            self.postNotification(NotificationKey.AlbumResultsKey.rawValue, results: albumArray)
+        })
+    }
+    
+    func getArtistAlbums(id: String, withCompletion:(albumArray: [Album]) -> Void) {
+        let url = SpotifyURL.getArtistsAlbums(id)
+        let request = createRequest(url, method: GET)
+        createTask(request, completion: { json in
+            let array = json.valueForKey(Key.Items.rawValue) as! [NSDictionary]
             var albumArray = [Album]()
             for obj in array {
                 let album = Album(json: obj)
-                //album.artist = artist.name
-                //album.genres = artist.genres
                 albumArray.append(album)
             }
-            self.delegate?.albumResults(albumArray)
+            withCompletion(albumArray: albumArray)
         })
     }
     
     //MARK: Get Tracks
     func getAlbumTracks(id: String) {
         let url = SpotifyURL.getAlbumsTracks(id)
-        let request = createRequest(url, method: "GET")
+        let request = createRequest(url, method: GET)
         createTask(request, completion: { json in
-            let array = json.valueForKey("items") as! [NSDictionary]
+            let array = json.valueForKey(Key.Items.rawValue) as! [NSDictionary]
             var trackArray = [Track]()
             for obj in array {
                 let track = Track(json: obj)
                 trackArray.append(track)
             }
-            self.delegate?.trackResults(trackArray)
+            self.postNotification(NotificationKey.TrackResultsKey.rawValue, results: trackArray)
+        })
+    }
+    
+    func getAlbumTracks(id: String, withCompletion:(albumArray: [Track]) -> Void) {
+        let url = SpotifyURL.getAlbumsTracks(id)
+        let request = createRequest(url, method: GET)
+        createTask(request, completion: { json in
+            let array = json.valueForKey(Key.Items.rawValue) as! [NSDictionary]
+            var trackArray = [Track]()
+            for obj in array {
+                let track = Track(json: obj)
+                trackArray.append(track)
+            }
+            withCompletion(albumArray: trackArray)
         })
     }
     
     func getArtistTopTracks(id: String) {
         let url = SpotifyURL.getArtistTopTracks(id)
-        let request = createRequest(url, method: "GET")
+        let request = createRequest(url, method: GET)
         createTask(request, completion: { json in
-            let array = json.valueForKey("tracks") as! [NSDictionary]
+            let array = json.valueForKey(Key.Tracks.rawValue) as! [NSDictionary]
             var trackArray = [Track]()
             for obj in array {
                 let track = Track(json: obj)
                 trackArray.append(track)
             }
-            self.delegate?.trackResults(trackArray)
+            self.postNotification(NotificationKey.TrackResultsKey.rawValue, results: trackArray)
         })
     }
-}
-//MARK: Delegate Declaration
-protocol SpotifyAPIDelegate: class {
-    func artistResults(artists: [Artist])
-    func albumResults(albums: [Album])
-    func trackResults(tracks: [Track])
+    
+    func getArtistTopTracks(id: String, withCompletion:(albumArray: [Track]) -> Void) {
+        let url = SpotifyURL.getArtistTopTracks(id)
+        let request = createRequest(url, method: GET)
+        createTask(request, completion: { json in
+            let array = json.valueForKey(Key.Tracks.rawValue) as! [NSDictionary]
+            var trackArray = [Track]()
+            for obj in array {
+                let track = Track(json: obj)
+                trackArray.append(track)
+            }
+            withCompletion(albumArray: trackArray)
+        })
+    }
 }
 
 struct SpotifyURL {
@@ -138,12 +221,11 @@ struct SpotifyURL {
     }
     
     static func getArtistsAlbums(id: String) -> NSURL {
-        let urlString = baseURL + EndPoints.Artists.rawValue + "/" + id + "/albums"
+        let urlString = baseURL + EndPoints.Artists.rawValue + "/" + id + "/albums?album_type=album&market=ES"
         return NSURL(string: urlString)!
     }
     
     static func getArtistTopTracks(id: String) -> NSURL {
-        //"https://api.spotify.com/v1/artists/3TVXtAsR1Inumwj472S9r4/top-tracks?country=ES"
         let urlString = baseURL + EndPoints.Artists.rawValue + "/" + id + "/top-tracks?country=US"
         return NSURL(string: urlString)!
     }
@@ -181,8 +263,12 @@ struct SpotifyURL {
     }
     
     //MARK: Search URL
-    static func searchArtist(artist: String) -> NSURL {
-        let urlString = baseURL + EndPoints.Search.rawValue + "?q=" + artist + "&type=artist"
-        return NSURL(string: urlString)!
+    static func searchArtist(query: String) -> NSURL? {
+        let q = query.stringByReplacingOccurrencesOfString("\\", withString: "")
+        let urlString :String = baseURL + EndPoints.Search.rawValue + "?q=" + q + "&type=artist"
+        if let url = NSURL(string: urlString) {
+            return url
+        }
+        return nil
     }
 }

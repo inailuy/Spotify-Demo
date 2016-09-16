@@ -8,6 +8,12 @@
 
 import UIKit
 
+let helveticaThinFont = "HelveticaNeue-Thin"
+let helveticaLightFont = "HelveticaNeue-Light"
+let helveticaFont = "HelveticaNeue"
+let helveticaMediumFont = "HelveticaNeue-Medium"
+let helveticaUltraLightFont = "HelveticaNeue-UltraLight"
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
@@ -16,6 +22,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
+        
+        let barButtonAppearance = [NSFontAttributeName : UIFont(name: helveticaLightFont, size: 16)!]
+        let navBarApearance = [NSFontAttributeName : UIFont(name: helveticaMediumFont, size: 33)!,
+                               NSForegroundColorAttributeName: UIColor.blackColor()]
+        UIBarButtonItem.appearance().setTitleTextAttributes(barButtonAppearance, forState: .Normal)
+        UINavigationBar.appearance().titleTextAttributes = navBarApearance
+        
+        
         
         return true
     }
