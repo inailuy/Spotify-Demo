@@ -22,7 +22,7 @@
             </objects>
             <point key="canvasLocation" x="-410" y="225"/>
         </scene>
-        <!--SearchVC-->
+        <!--Discover-->
         <scene sceneID="tne-QT-ifu">
             <objects>
                 <viewController id="BYZ-38-t0r" customClass="SearchVC" customModule="SpotifyDemo" customModuleProvider="target" sceneMemberID="viewController">
@@ -102,7 +102,7 @@
                             <constraint firstItem="J1z-1t-tJ4" firstAttribute="trailing" secondItem="WcV-fi-XR3" secondAttribute="trailing" id="xYh-B8-gLz"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" id="fFH-dy-wrX"/>
+                    <navigationItem key="navigationItem" title="Discover" id="fFH-dy-wrX"/>
                     <connections>
                         <outlet property="searchBar" destination="WcV-fi-XR3" id="e1G-PZ-fyJ"/>
                         <outlet property="tableView" destination="J1z-1t-tJ4" id="44j-NZ-6OX"/>

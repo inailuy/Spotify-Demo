@@ -19,8 +19,6 @@ class SearchVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UI
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        title = "Discover"
         SpotifyAPI.sharedInstance.getArtists("lil", withCompletion: { artistArray in
             self.artistsArray = artistArray
             dispatch_async(dispatch_get_main_queue()) { () -> Void in

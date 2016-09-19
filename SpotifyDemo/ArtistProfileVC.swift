@@ -187,15 +187,9 @@ class ArtistProfileVC: UITableViewController, UICollectionViewDelegate, UICollec
         var title :String!
         switch section {
         case TableSection.TopSongs.rawValue:
-            if artist.topSongs.count == 0 {
-                return nil
-            }
             title = "Popular Tracks"
             break
         case TableSection.Albums.rawValue:
-            if artist.albums.count == 0 {
-                return nil
-            }
             title = "Albums"
             break
         case TableSection.SimilarArtist.rawValue:

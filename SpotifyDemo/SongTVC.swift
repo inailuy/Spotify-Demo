@@ -24,7 +24,7 @@ class SongTVC: UITableViewController {
         let explicitLabel = cell?.viewWithTag(101) as! UILabel
         let durationLabel = cell?.viewWithTag(102) as! UILabel
         
-        songLabel.text = String(indexPath.row) + ". " + track.name
+        songLabel.text = String(indexPath.row + 1) + ". " + track.name
         explicitLabel.hidden = !track.explicit.boolValue
         durationLabel.text = track.length()
         
