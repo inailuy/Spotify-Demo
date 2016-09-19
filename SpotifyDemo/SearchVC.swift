@@ -33,13 +33,15 @@ class SearchVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UI
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCellWithIdentifier("cellId")
         let artist = artistsArray[indexPath.row]
+        let albumImageView = cell?.viewWithTag(100) as! UIImageView
+        let titleLabel = cell?.viewWithTag(101) as! UILabel
+        let detailLabel = cell?.viewWithTag(102) as! UILabel
         
-        cell?.textLabel?.text = artist.name
-        cell?.detailTextLabel?.text = artist.followers.stringValue + " followers"
-        
+        titleLabel.text = artist.name
+        detailLabel.text = artist.followerString()
         if let img = artist.portraitImage() {
-            cell?.imageView?.image = UIImage()
-            cell?.imageView?.loadImageFromPath(img.url)
+            albumImageView.loadImageFromPath(img.url)
+            albumImageView.makeImageCircular()
         }
         
         return cell!
@@ -73,16 +75,6 @@ class SearchVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UI
         })
     }
     
-    func searchBarTextDidEndEditing(searchBar: UISearchBar) {
-        print("searchBarTextDidEndEditing")
-        print(searchBar.text)
-    }
-    
-    func searchBarSearchButtonClicked(searchBar: UISearchBar) {
-        print("searchBarSearchButtonClicked")
-        print(searchBar.text)
-    }
-    
     //MARK: Spotify API Delegate
     func artistResults(notification: NSNotification){
         artistsArray = notification.object as! [Artist]
@@ -97,5 +89,9 @@ class SearchVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UI
             let vc = segue.destinationViewController as! ArtistProfileVC
             vc.artist = selectedArtist
         }
+    }
+    
+    func scrollViewWillBeginDragging(scrollView: UIScrollView) {
+        view.window?.endEditing(true)
     }
 }

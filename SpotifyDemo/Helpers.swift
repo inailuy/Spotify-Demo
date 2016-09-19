@@ -1,32 +1,26 @@
+//
+//  Helpers.swift
+//  SpotifyDemo
+//
+//  Created by inailuy on 9/15/16.
+//  Copyright © 2016 yulz. All rights reserved.
+//
+
 import UIKit
 
-func generateRandomData() -> [[UIColor]] {
-    let numberOfRows = 20
-    let numberOfItemsPerRow = 15
+var imageDictionary = NSMutableDictionary() // cache images during a ongoing session
 
-    return (0..<numberOfRows).map { _ in
-        return (0..<numberOfItemsPerRow).map { _ in UIColor.randomColor() }
-    }
-}
-
-extension UIColor {
-    class func randomColor() -> UIColor {
-
-        let hue = CGFloat(arc4random() % 100) / 100
-        let saturation = CGFloat(arc4random() % 100) / 100
-        let brightness = CGFloat(arc4random() % 100) / 100
-
-        return UIColor(hue: hue, saturation: saturation, brightness: brightness, alpha: 1.0)
-    }
-}
-
-var imageDictionary = NSMutableDictionary()
-
+// ImageView extension methods
 extension UIImageView {
     func loadImageFromPath(urlString: String) {
         if let img = imageDictionary[urlString] as? UIImage {
             image = img
         } else {
+            let activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.Gray)
+            activityIndicator.frame = CGRect(x: 0, y: 0, width: frame.size.width, height: frame.size.height)
+            activityIndicator.startAnimating()
+            addSubview(activityIndicator)
+            
             image = UIImage()
             let priority = DISPATCH_QUEUE_PRIORITY_DEFAULT
             dispatch_async(dispatch_get_global_queue(priority, 0)) {
@@ -36,6 +30,8 @@ extension UIImageView {
                     if let img = UIImage(data: data) {
                         imageDictionary.setValue(img, forKey: urlString)
                         self.image = img
+                        
+                        activityIndicator.stopAnimating()
                     }
                 })
             }
@@ -64,3 +60,28 @@ extension UIImageView {
 enum Segue : String {
     case SeachVC, ArtistProfileVC, SongTVC, AlbumTVC
 }
+
+enum Key :String {
+    case Name = "name"
+    case ID = "id"
+    case Generes = "generes"
+    case HREF = "href"
+    case Followers = "followers"
+    case Total = "total"
+    case Images = "images"
+    case Height = "height"
+    case Width = "width"
+    case URL = "url"
+    case Duration = "duration_ms"
+    case Explicit = "explicit"
+    case PreviewURL = "preview_url"
+    case Artist = "artists"
+    case Items = "items"
+    case Tracks = "tracks"
+}
+
+let helveticaThinFont = "HelveticaNeue-Thin"
+let helveticaLightFont = "HelveticaNeue-Light"
+let helveticaFont = "HelveticaNeue"
+let helveticaMediumFont = "HelveticaNeue-Medium"
+let helveticaUltraLightFont = "HelveticaNeue-UltraLight"

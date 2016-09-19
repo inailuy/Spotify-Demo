@@ -8,7 +8,7 @@
 
 import Foundation
 import UIKit
-//TODO: Support multiple screen sizes for collectionview cell
+
 class AlbumTVC: UICollectionViewController {
     var artist = Artist()
     var selectedAlbum :Album?
@@ -17,8 +17,6 @@ class AlbumTVC: UICollectionViewController {
         
         super.viewDidLoad()
         title = artist.name
-        
-        print(selectedAlbum)
     }
     
     override func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {

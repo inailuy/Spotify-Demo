@@ -14,8 +14,6 @@ class SongTVC: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        print(tracks)
     }
     
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -41,4 +39,21 @@ class SongTVC: UITableViewController {
         return CGFloat(75)
     }
     
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        let reachability: Reachability = Reachability.reachabilityForInternetConnection()
+        let networkStatus: Int = reachability.currentReachabilityStatus().rawValue
+        if networkStatus == 0 {
+            let string = "No Internet Connection"
+            let alertController = UIAlertController(title: "Error", message: string, preferredStyle: .Alert)
+            let OKAction = UIAlertAction(title: "OK", style: .Default) { (action) in }
+            alertController.addAction(OKAction)
+            
+            self.presentViewController(alertController, animated: true) { }
+        }
+        
+        tableView.deselectRowAtIndexPath(indexPath, animated: false)
+        
+        let track = tracks[indexPath.row]
+        AudioController.sharedInstance.playPreview(track.previewURL!)
+    }
 }

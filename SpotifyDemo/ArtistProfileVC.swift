@@ -18,10 +18,9 @@ enum TableSection :Int {
     case Intro = 0 , TopSongs, Albums, SimilarArtist, Followers
 }
 
-class ArtistProfileVC: UITableViewController {
+class ArtistProfileVC: UITableViewController, UICollectionViewDelegate, UICollectionViewDataSource {
     var artist :Artist!
     var storedOffsets = [Int: CGFloat]()
-    let model = generateRandomData()
     let cellLimit = 5
     
     let primaryColor = UIColor.whiteColor()
@@ -60,17 +59,6 @@ class ArtistProfileVC: UITableViewController {
         dispatch_async(dispatch_get_main_queue(), {
             self.tableView.reloadData()
         })
-    }
-    
-    func albumResults(albums: [Album]) {
-        print("albumResults")
-        print(albums)
-    }
-    
-    func trackResults(tracks: [Track]) {
-        print("trackResults")
-        print(tracks)
-        
     }
     
     //MARK: TableView Delegate/Datasource
@@ -114,8 +102,22 @@ class ArtistProfileVC: UITableViewController {
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         selectedIndexPath = indexPath
+        tableView.deselectRowAtIndexPath(indexPath, animated: false)
         if indexPath.section == TableSection.TopSongs.rawValue && indexPath.row < cellLimit {
             // play song
+            let reachability: Reachability = Reachability.reachabilityForInternetConnection()
+            let networkStatus: Int = reachability.currentReachabilityStatus().rawValue
+            if networkStatus == 0 {
+                let string = "No Internet Connection"
+                let alertController = UIAlertController(title: "Error", message: string, preferredStyle: .Alert)
+                let OKAction = UIAlertAction(title: "OK", style: .Default) { (action) in }
+                alertController.addAction(OKAction)
+                
+                self.presentViewController(alertController, animated: true) { }
+            }
+            
+            let track = artist.topSongs[indexPath.row]
+            AudioController.sharedInstance.playPreview(track.previewURL!)
         } else if indexPath.section == TableSection.TopSongs.rawValue && indexPath.row == cellLimit {
             // open more tacks
             performSegueWithIdentifier(Segue.SongTVC.rawValue, sender: nil)
@@ -253,11 +255,10 @@ class ArtistProfileVC: UITableViewController {
         }
         return height
     }
-    
+    //MARK: TableView Setups
     func setupCell(cell: UITableViewCell, indexPath: NSIndexPath) {
         switch indexPath.section {
         case TableSection.Intro.rawValue:
-            print(indexPath)
             setupIntroCell(cell)
             break
         case TableSection.TopSongs.rawValue:
@@ -312,6 +313,7 @@ class ArtistProfileVC: UITableViewController {
         let album = artist.albums[indexPath.row]
         if let temp = album.portraitImage()?.url! {
             albumImageView.loadImageFromPath(temp)
+            albumImageView.makeCornersRound()
         }
         titleLabel.text = album.name
         if album.explicit == true {
@@ -324,6 +326,36 @@ class ArtistProfileVC: UITableViewController {
         label.text = "See all " + string
     }
     
+    //MARK: CollectionView Delegate/Datasource
+    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return artist.similarArtists.count
+    }
+    
+    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("Cell", forIndexPath: indexPath)
+        
+        let similarArtist = artist.similarArtists[indexPath.row]
+        let iv = cell.viewWithTag(100) as! UIImageView
+        let artistLabel = cell.viewWithTag(101) as! UILabel
+        
+        iv.makeImageCircular()
+        if let image = similarArtist.portraitImage() {
+            iv.loadImageFromPath(image.url)
+        }
+        
+        artistLabel.text = similarArtist.name
+        
+        return cell
+    }
+    
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        let selectedArtist = artist.similarArtists[indexPath.row]
+        artist = selectedArtist
+        artist?.loadAdditionalResources()
+        performSegueWithIdentifier(Segue.ArtistProfileVC.rawValue, sender: nil)
+    }
+    
+    //MARK: Segue
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject!) {
         if segue.identifier == Segue.ArtistProfileVC.rawValue {
             let vc = segue.destinationViewController as! ArtistProfileVC
@@ -342,31 +374,5 @@ class ArtistProfileVC: UITableViewController {
             let vc = segue.destinationViewController as! AlbumTVC
             vc.artist = artist
         }
-    }
-}
-
-extension ArtistProfileVC: UICollectionViewDelegate, UICollectionViewDataSource {
-    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return artist.similarArtists.count
-    }
-
-    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("Cell", forIndexPath: indexPath)
-        
-        let similarArtist = artist.similarArtists[indexPath.row]
-        let iv = cell.viewWithTag(100) as! UIImageView
-        iv.makeImageCircular()
-        iv.loadImageFromPath(similarArtist.portraitImage()!.url)
-        
-        return cell
-    }
-    
-    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-        print("Collection view at row \(collectionView.tag) selected index path \(indexPath)")
-        
-        let selectedArtist = artist.similarArtists[indexPath.row]
-        artist = selectedArtist
-        artist?.loadAdditionalResources()
-        performSegueWithIdentifier(Segue.ArtistProfileVC.rawValue, sender: nil)
     }
 }

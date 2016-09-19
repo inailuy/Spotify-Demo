@@ -9,25 +9,6 @@
 import Foundation
 import UIKit
 
-enum Key :String {
-    case Name = "name"
-    case ID = "id"
-    case Generes = "generes"
-    case HREF = "href"
-    case Followers = "followers"
-    case Total = "total"
-    case Images = "images"
-    case Height = "height"
-    case Width = "width"
-    case URL = "url"
-    case Duration = "duration_ms"
-    case Explicit = "explicit"
-    case PreviewURL = "preview_url"
-    case Artist = "artists"
-    case Items = "items"
-    case Tracks = "tracks"
-}
-
 class Artist:NSObject {
     var name :String!
     var id :String!
@@ -41,7 +22,7 @@ class Artist:NSObject {
     var similarArtists = [Artist]()
     
     override init() {
-        
+        //
     }
     
     init(json:NSDictionary) {
@@ -75,7 +56,6 @@ class Artist:NSObject {
             for x in 0...albumArray.count {
                 var y = x+1
                 while self.albums.count > y {
-                    print(self.albums[x].name + " " + self.albums[y].name)
                     if self.albums[x].name == self.albums[y].name {
                         self.albums.removeAtIndex(y)
                         break
@@ -114,8 +94,11 @@ class Artist:NSObject {
                 return i
             }
         }
+        if images.count > 0 {
+            return images.last
+        }
         
-        return images.first
+        return nil
     }
     
     func followerString() -> String {
@@ -145,7 +128,7 @@ class Album:NSObject {
     var tracks = [Track]()
     
     override init() {
-        
+        //
     }
     
     init(json: NSDictionary) {
@@ -210,9 +193,9 @@ class Track:NSObject {
     }
     
     func length() -> String {
-        let minutes = duration.integerValue / 60
-        let seconds = duration.integerValue % 60
-        return String(minutes) + ":" + String(seconds)
+        let sec = duration.integerValue % 60
+        let minutes = duration.integerValue / 60000
+        return String(format: "%02d:%02d", minutes, sec)
     }
 }
 

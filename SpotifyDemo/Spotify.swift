@@ -38,6 +38,12 @@ class SpotifyAPI: NSObject {
     }
     
     private func createTask(request: NSMutableURLRequest, completion: (json: NSDictionary) -> Void) {
+        let reachability: Reachability = Reachability.reachabilityForInternetConnection()
+        let networkStatus: Int = reachability.currentReachabilityStatus().rawValue
+        if networkStatus == 0 {
+            return
+        }
+        
         let session = NSURLSession.sharedSession()
         let task = session.dataTaskWithRequest(request) { data, response, error in
             do {
