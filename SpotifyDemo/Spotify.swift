@@ -37,7 +37,7 @@ class SpotifyAPI: NSObject {
         return request
     }
     
-    private func createTask(request: NSMutableURLRequest, completion: (json:NSDictionary) -> Void) {
+    private func createTask(request: NSMutableURLRequest, completion: (json: NSDictionary) -> Void) {
         let reachability: Reachability = Reachability.reachabilityForInternetConnection()
         let networkStatus: Int = reachability.currentReachabilityStatus().rawValue
         if networkStatus == 0 {
@@ -69,23 +69,23 @@ class SpotifyAPI: NSObject {
     
     //MARK: Get Artists
     func getArtists(query: String) {
-        if let url = SpotifyURL.searchArtist(query) {
-            let request = createRequest(url, method:GET)
-            createTask(request, completion:{ json in
-                let dic = json.valueForKey(Key.Artist.rawValue) as! NSDictionary
-                let array = dic.valueForKey(Key.Items.rawValue) as! [NSDictionary]
-                var artistArray = [Artist]()
-                for obj in array {
-                    let artist = Artist(json: obj)
-                    artistArray.append(artist)
-                }
-                self.postNotification(NotificationKey.ArtistResultsKey.rawValue, results: artistArray)
-            })
-        }
+        let url = SpotifyURL.searchArtist(query)
+        let request = createRequest(url!, method:GET)
+        createTask(request, completion:{ json in
+            let dic = json.valueForKey(Key.Artist.rawValue) as! NSDictionary
+            let array = dic.valueForKey(Key.Items.rawValue) as! [NSDictionary]
+            var artistArray = [Artist]()
+            for obj in array {
+                let artist = Artist(json: obj)
+                artistArray.append(artist)
+            }
+            self.postNotification(NotificationKey.ArtistResultsKey.rawValue, results: artistArray)
+        })
     }
     
     func getArtists(query: String, withCompletion:(albumArray: [Artist]) -> Void) {
-        if let url = SpotifyURL.searchArtist(query) {
+        let formartQuery = query.stringByReplacingOccurrencesOfString(" ", withString: "+", options: .LiteralSearch, range: nil)
+        if let url = SpotifyURL.searchArtist(formartQuery + "*") {
             let request = createRequest(url, method:GET)
             createTask(request, completion:{ json in
                 let dic = json.valueForKey(Key.Artist.rawValue) as! NSDictionary
@@ -98,20 +98,6 @@ class SpotifyAPI: NSObject {
                 withCompletion(albumArray: artistArray)
             })
         }
-    }
-    
-    func getSimilarArtist(id: String) {
-        let url = SpotifyURL.getArtistRelatedArtist(id)
-        let request = createRequest(url, method: GET)
-        createTask(request, completion: { json in
-            let array = json.valueForKey(Key.Artist.rawValue) as! [NSDictionary]
-            var artistArray = [Artist]()
-            for obj in array {
-                let artist = Artist(json: obj)
-                artistArray.append(artist)
-            }
-            self.postNotification(NotificationKey.ArtistResultsKey.rawValue, results: artistArray)
-        })
     }
     
     func getSimilarArtist(id: String, withCompletion:(albumArray: [Artist]) -> Void) {
@@ -132,6 +118,7 @@ class SpotifyAPI: NSObject {
     func getArtistAlbums(id: String) {
         let url = SpotifyURL.getArtistsAlbums(id)
         let request = createRequest(url, method: GET)
+        
         createTask(request, completion: { json in
             let array = json.valueForKey(Key.Items.rawValue) as! [NSDictionary]
             var albumArray = [Album]()
@@ -154,6 +141,7 @@ class SpotifyAPI: NSObject {
                 let album = Album(json: obj)
                 albumArray.append(album)
             }
+
             withCompletion(albumArray: albumArray)
         })
     }
@@ -162,6 +150,7 @@ class SpotifyAPI: NSObject {
     func getAlbumTracks(id: String) {
         let url = SpotifyURL.getAlbumsTracks(id)
         let request = createRequest(url, method: GET)
+
         createTask(request, completion: { json in
             let array = json.valueForKey(Key.Items.rawValue) as! [NSDictionary]
             var trackArray = [Track]()
@@ -183,6 +172,7 @@ class SpotifyAPI: NSObject {
                 let track = Track(json: obj)
                 trackArray.append(track)
             }
+
             withCompletion(albumArray: trackArray)
         })
     }

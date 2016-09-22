@@ -64,6 +64,7 @@ class SearchVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UI
         if searchBar.text == "" {
             return
         }
+
         SpotifyAPI.sharedInstance.getArtists(searchBar.text!, withCompletion: { artistArray in
             self.artistsArray = artistArray
             dispatch_async(dispatch_get_main_queue()) { () -> Void in
@@ -75,7 +76,7 @@ class SearchVC: UIViewController, UITableViewDelegate, UITableViewDataSource, UI
     func searchBarSearchButtonClicked(searchBar: UISearchBar){
         view.window?.endEditing(true)
     }
-    
+
     //MARK: Spotify API Delegate
     func artistResults(notification: NSNotification){
         artistsArray = notification.object as! [Artist]
